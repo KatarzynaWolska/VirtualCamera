@@ -3,6 +3,7 @@ from file_module.file_handler import FileHandler
 from PyQt5.QtWidgets import (QApplication)
 import sys
 
+
 def main():
     fileHandler = FileHandler()
     app = QApplication(sys.argv)

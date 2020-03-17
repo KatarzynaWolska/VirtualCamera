@@ -4,6 +4,7 @@ from PyQt5.QtCore import QPoint, Qt
 from PyQt5.QtWidgets import QMainWindow
 import sys
 
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -18,10 +19,27 @@ class MainWindow(QMainWindow):
         #self.projection()
 
 
-    def paintEvent(self, event):    
+    def paintEvent(self, event): 
         self.painter = QPainter(self)
+        #self.painter.translate(0, self.height)
+        #self.painter.scale(1, -1)
         self.painter.setPen(Qt.black)
         self.projection()
+        self.painter.end()
+
+
+    def keyPressEvent(self, event):
+        pressedKey = event.key()
+        if pressedKey == Qt.Key_A:
+            self.matrix_trans.move(-1, 0, 0)
+        elif pressedKey == Qt.Key_D:
+            self.matrix_trans.move(1, 0, 0)
+        elif pressedKey == Qt.Key_W:
+            self.matrix_trans.move(0, -1, 0)
+        elif pressedKey == Qt.Key_S:
+            self.matrix_trans.move(0, 1, 0)
+        event.accept()
+        self.repaint()
 
 
     def project_point(self, x, y, z):
@@ -45,7 +63,7 @@ class MainWindow(QMainWindow):
 
         i = 0
         for polygon in polygons:
-            #if i == 0 or i == 3:
+            #if i == 0:
             points = []
             for coords in polygon:
                 points.append(self.project_point(coords[0], coords[1], coords[2]))
