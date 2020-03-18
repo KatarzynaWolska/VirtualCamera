@@ -8,7 +8,7 @@ class MatrixTransformations:
     def __init__(self):
         file_handler = FileHandler()
         self.polygons = file_handler.read_file()
-        self.step = 10
+        self.step = 3
         self.angle_step = math.pi / 30
 
 
@@ -59,5 +59,3 @@ class MatrixTransformations:
                 new_coords = numpy.concatenate((new_coords, [result]), axis=0) if new_coords is not None else [result]
             new_polygons = numpy.concatenate((new_polygons, [new_coords]), axis=0) if new_polygons is not None else [new_coords]
         self.polygons = new_polygons
-        #print("Polygons")
-        #print(new_polygons)
