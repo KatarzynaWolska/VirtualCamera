@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
 
     def project_point(self, x, y, z):
         if z < 0:
-            return None
+            z = 0.000001
         new_x = x * (self.distance / z)
         new_y = y * (self.distance / z)
         return QPointF(new_x, new_y)
