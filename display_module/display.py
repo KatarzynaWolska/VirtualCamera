@@ -36,13 +36,13 @@ class MainWindow(QMainWindow):
     def keyPressEvent(self, event):
         pressedKey = event.key()
         if pressedKey == Qt.Key_A:
-            self.matrix_trans.move(-1, 0, 0)
-        elif pressedKey == Qt.Key_D:
             self.matrix_trans.move(1, 0, 0)
+        elif pressedKey == Qt.Key_D:
+            self.matrix_trans.move(-1, 0, 0)
         elif pressedKey == Qt.Key_W:
-            self.matrix_trans.move(0, 1, 0)
-        elif pressedKey == Qt.Key_S:
             self.matrix_trans.move(0, -1, 0)
+        elif pressedKey == Qt.Key_S:
+            self.matrix_trans.move(0, 1, 0)
         elif pressedKey == Qt.Key_C:
             self.matrix_trans.move(0, 0, 1)
         elif pressedKey == Qt.Key_V:
@@ -74,29 +74,12 @@ class MainWindow(QMainWindow):
 
     
     def draw_rectangle(self, points):
-        for i in range(0, len(points)):
-            if i == (len(points) - 1):
-                self.painter.drawLine(points[i], points[0])
-            else:
-                self.painter.drawLine(points[i], points[i+1])
-
-    
-    def draw_rectangle2(self, points):
         for line in points:
             self.painter.drawLine(line[0], line[1])
 
 
     def projection(self):
         polygons = self.matrix_trans.get_polygons()
-        """for polygon in polygons:
-            points = []
-            for coords in polygon:
-                projected_point = self.project_point(coords[0], coords[1], coords[2])
-                if projected_point != None:
-                    points.append(self.project_point(coords[0], coords[1], coords[2]))
-
-            self.draw_rectangle(points)"""
-
         for j in range(0, len(polygons)):
             points = []
             coords = polygons[j]
@@ -107,26 +90,22 @@ class MainWindow(QMainWindow):
                 else:
                     point2 = coords[i+1]
 
-                res = self.check_points(point1, point2)    
+                res = self.prepare_points(point1, point2)    
 
                 if res != None:
                     points.append(res)
 
-            self.draw_rectangle2(points)
+            self.draw_rectangle(points)
 
 
-    def check_points(self, point1, point2):
+    def prepare_points(self, point1, point2):
         if point1[2] <= 1 and point2[2] <= 1:
             return None
         
         res = None
 
         if point1[2] <= 1:
-            direction = numpy.array([
-                point2[0] - point1[0],
-                point2[1] - point1[1],
-                point2[2] - point1[2]
-            ])
+            direction = numpy.array(point2 - point1)
 
             res = self.intersection(direction, point1)
             
@@ -134,11 +113,7 @@ class MainWindow(QMainWindow):
             proj_point2 = self.project_point(point2[0], point2[1], point2[2])
 
         elif point2[2] <= 1:
-            direction = numpy.array([
-                point1[0] - point2[0],
-                point1[1] - point2[1],
-                point1[2] - point2[2]
-            ])
+            direction = numpy.array(point1 - point2)
 
             res = self.intersection(direction, point2)
 
@@ -149,28 +124,23 @@ class MainWindow(QMainWindow):
             proj_point1 = self.project_point(point1[0], point1[1], point1[2])
             proj_point2 = self.project_point(point2[0], point2[1], point2[2])
 
-
         return (proj_point1, proj_point2)
 
 
     def intersection(self, direction, point):
         epsilon=1e-6
         planeNormal = numpy.array([0, 0, 1])
-        planePoint = numpy.array([0, 0, 1]) #Any point on the plane
+        planePoint = numpy.array([0, 0, 1])
 
-        rayPoint = numpy.array([point[0], point[1], point[2]]) #Any point along the ray
-
+        rayPoint = numpy.array([point[0], point[1], point[2]])
 
         ndotu = planeNormal.dot(direction) 
 
         if abs(ndotu) < epsilon:
-            #print ("no intersection or line is within plane")
             return None
 
         w = rayPoint - planePoint
         si = -planeNormal.dot(w) / ndotu
         Psi = w + si * direction + planePoint
-
-        #print ("intersection at", Psi)
         return Psi
 
