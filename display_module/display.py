@@ -99,12 +99,12 @@ class MainWindow(QMainWindow):
 
 
     def prepare_points(self, point1, point2):
-        if point1[2] <= 1 and point2[2] <= 1:
+        if point1[2] < 1 and point2[2] < 1:
             return None
         
         res = None
 
-        if point1[2] <= 1:
+        if point1[2] < 1:
             direction = numpy.array(point2 - point1)
 
             res = self.intersection(direction, point1)
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
             proj_point1 = self.project_point(res[0], res[1], res[2])
             proj_point2 = self.project_point(point2[0], point2[1], point2[2])
 
-        elif point2[2] <= 1:
+        elif point2[2] < 1:
             direction = numpy.array(point1 - point2)
 
             res = self.intersection(direction, point2)
