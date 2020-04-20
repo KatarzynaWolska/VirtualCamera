@@ -20,15 +20,11 @@ class MainWindow(QMainWindow):
         self.setFixedSize(self.width, self.height)
         self.setWindowTitle("Virtual Camera")
         self.matrix_trans = MatrixTransformations()
-        file_handler = FileHandler()
-        self.colors = itertools.cycle(file_handler.get_colors())
         self.rectangles = []
 
 
     def paintEvent(self, event): 
         self.painter = QPainter(self)
-        #self.painter.translate(self.width/2, self.height/2)
-        #self.painter.scale(1, -1)
         self.painter.setPen(Qt.black)
         self.projection()
         self.painter.end()
@@ -81,17 +77,19 @@ class MainWindow(QMainWindow):
             return Qt.yellow
         elif color == 'green':
             return Qt.green
+        elif color == 'magenta':
+            return Qt.magenta
+        elif color == 'cyan':
+            return Qt.cyan
 
 
     def project_point(self, x, y, z):
         new_x = x * (self.distance / z)
         new_y = y * (self.distance / z)
-        #return QPointF(new_x, new_y)
         return new_x, new_y, z
 
     
-    def draw_rectangle(self, points):
-        color = next(self.colors)
+    def draw_rectangle(self, points, color):
         self.painter.setPen(self.get_color(color))
         
         path = QPainterPath()
@@ -107,36 +105,24 @@ class MainWindow(QMainWindow):
 
 
     def draw_rectangles(self):
-        for rectangle, z in self.rectangles:
-            self.draw_rectangle(rectangle)
+        for i in range(len(self.rectangles)):
+            self.draw_rectangle(self.rectangles[i][0][0], self.rectangles[i][1])
     
 
-    def add_rectangle(self, points):
-        """if points[0][0][2] > points[0][1][2]:
-            min_z = points[0][1][2]
-        else:
-            min_z = points[0][0][2]
-
-        for i in range(1, len(points)):
-            if points[i][0][2] < min_z:
-                min_z = points[i][0][2]
-
-            if points[i][1][2] < min_z:
-                min_z = points[i][1][2]"""
-        
+    def add_rectangle(self, points, color):
         avg_z = 0
         for point in points:
             avg_z += (point[0][2] + point[1][2]) / 2
         
-        self.rectangles.append((points, avg_z))
+        self.rectangles.append(((points, avg_z), color))
 
 
     def projection(self):
         self.rectangles = []
-        polygons = self.matrix_trans.get_polygons()
-        for j in range(0, len(polygons)):
+        walls = self.matrix_trans.get_walls()
+        for wall in walls:
             points = []
-            coords = polygons[j]
+            coords = wall.points
             for i in range(0, len(coords)):
                 point1 = coords[i]
                 if i == (len(coords) - 1):
@@ -149,43 +135,20 @@ class MainWindow(QMainWindow):
                 if res != None:
                     points.append(res)
 
-            self.add_rectangle(points)
-            #self.draw_rectangle(points)
+            self.add_rectangle(points, wall.color)
 
         self.rectangles.sort(key=self.sort_order)
         self.draw_rectangles()
 
     
     def sort_order(self, rect):
-        """points = rect[0]
-        if points[0][0][0] < points[0][1][0]:
-            min_x = points[0][0][0]
-        else:
-            min_x = points[0][1][0]
-
-        if points[0][0][1] < points[0][1][1]:
-            min_y = points[0][0][1]
-        else:
-            min_y = points[0][1][1]
-
-        for i in range(1, len(points)):
-            if points[i][0][0] < min_x:
-                min_x = points[i][0][0]
-            if points[i][1][0] < min_x:
-                min_x = points[i][1][0]
-            
-            if points[i][0][1] < min_y:
-                min_y = points[i][0][1]
-            if points[i][1][1] < min_y:
-                min_y = points[i][1][1]"""
-
         avg_x = 0
         avg_y = 0
-        for points in rect[0]:
+        for points in rect[0][0]:
             avg_x += (points[0][0] + points[1][0]) / 2
             avg_y += (points[0][1] + points[1][1]) / 2
 
-        return -abs(rect[1]), -abs(avg_x), -abs(avg_y)
+        return -abs(rect[0][1]), -abs(avg_x), -abs(avg_y)
 
 
     def prepare_points(self, point1, point2):

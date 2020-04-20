@@ -7,13 +7,13 @@ import math
 class MatrixTransformations:
     def __init__(self):
         file_handler = FileHandler()
-        self.polygons = file_handler.read_file()
+        self.walls = file_handler.read_file()
         self.step = 1
         self.angle_step = math.pi / 30
 
 
-    def get_polygons(self):
-        return self.polygons
+    def get_walls(self):
+        return self.walls
 
 
     def move(self, tx, ty, tz):
@@ -49,13 +49,12 @@ class MatrixTransformations:
 
 
     def calculate_matrix(self, matrix):
-        new_polygons = None
-        for polygon in self.polygons:
+        for wall in self.walls:
             new_coords = None
-            for coords in polygon:
+            for coords in wall.points:
                 coords = numpy.append(coords, [1])
                 result = numpy.matmul(matrix, coords)
                 result = numpy.delete(result, 3, axis=None)
                 new_coords = numpy.concatenate((new_coords, [result]), axis=0) if new_coords is not None else [result]
-            new_polygons = numpy.concatenate((new_polygons, [new_coords]), axis=0) if new_polygons is not None else [new_coords]
-        self.polygons = new_polygons
+            wall.points = new_coords
+

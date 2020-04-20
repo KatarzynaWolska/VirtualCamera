@@ -1,28 +1,34 @@
 import json
+import numpy
 from numpy import array
 from display_module.wall import Wall
 import itertools
 
 class FileHandler:
     def __init__(self):
-        self.filepath = './file_module/config_file.json'
+        self.filepath = './file_module/file2.json'
         self.read_file()
-        self.colors = itertools.cycle(self.file_data['colors'])
+
 
     def read_file(self):
         with open(self.filepath) as f:
             self.file_data = json.load(f)
-
-        """walls = []        
+        
+        colors = itertools.cycle(self.file_data['colors'])
+        walls = []        
         for data in self.file_data['polygons']:
-            color = next(self.colors)
+            color = next(colors)
             wall = Wall(color)
-            points = array()
+            points = []
             for point in data:
-                points.append(point)"""
+                points.append(point)
             
-            
-        return array(self.file_data['polygons'])
+            points = numpy.array(points)
+            wall.set_points(points)
+            walls.append(wall)
+
+        return walls
+
 
     def get_colors(self):
         with open(self.filepath) as f:
