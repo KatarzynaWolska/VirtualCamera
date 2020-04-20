@@ -1,9 +1,11 @@
 from math_module.calculations import MatrixTransformations
-from PyQt5.QtGui import QPolygon, QPainter
+from file_module.file_handler import FileHandler
+from PyQt5.QtGui import QPolygon, QPainter, QPainterPath, QPolygonF, QBrush, QColor
 from PyQt5.QtCore import QPoint, Qt, QPointF
 from PyQt5.QtWidgets import QMainWindow
 import sys
 import numpy
+import itertools
 
 
 class MainWindow(QMainWindow):
@@ -18,12 +20,15 @@ class MainWindow(QMainWindow):
         self.setFixedSize(self.width, self.height)
         self.setWindowTitle("Virtual Camera")
         self.matrix_trans = MatrixTransformations()
+        file_handler = FileHandler()
+        self.colors = itertools.cycle(file_handler.get_colors())
+        self.rectangles = []
 
 
     def paintEvent(self, event): 
         self.painter = QPainter(self)
-        self.painter.translate(self.width/2, self.height/2)
-        self.painter.scale(1, -1)
+        #self.painter.translate(self.width/2, self.height/2)
+        #self.painter.scale(1, -1)
         self.painter.setPen(Qt.black)
         self.projection()
         self.painter.end()
@@ -67,18 +72,67 @@ class MainWindow(QMainWindow):
         self.repaint()
 
 
+    def get_color(self, color):
+        if color == 'blue':
+            return Qt.blue
+        elif color == 'red':
+            return Qt.red
+        elif color == 'yellow':
+            return Qt.yellow
+        elif color == 'green':
+            return Qt.green
+
+
     def project_point(self, x, y, z):
         new_x = x * (self.distance / z)
         new_y = y * (self.distance / z)
-        return QPointF(new_x, new_y)
+        #return QPointF(new_x, new_y)
+        return new_x, new_y, z
 
     
     def draw_rectangle(self, points):
+        color = next(self.colors)
+        self.painter.setPen(self.get_color(color))
+        
+        path = QPainterPath()
+        polygon = QPolygonF()
+
         for line in points:
-            self.painter.drawLine(line[0], line[1])
+            polygon.append(QPointF(self.width / 2 + line[0][0], self.height / 2 -  line[0][1]))
+            polygon.append(QPointF(self.width / 2 + line[1][0], self.height / 2 -  line[1][1]))
+            
+        path.addPolygon(polygon)
+        self.painter.drawPath(path)
+        self.painter.fillPath(path, QBrush(QColor(color)))
+
+
+    def draw_rectangles(self):
+        for rectangle, z in self.rectangles:
+            self.draw_rectangle(rectangle)
+    
+
+    def add_rectangle(self, points):
+        """if points[0][0][2] > points[0][1][2]:
+            min_z = points[0][1][2]
+        else:
+            min_z = points[0][0][2]
+
+        for i in range(1, len(points)):
+            if points[i][0][2] < min_z:
+                min_z = points[i][0][2]
+
+            if points[i][1][2] < min_z:
+                min_z = points[i][1][2]"""
+        
+        avg_z = 0
+        for point in points:
+            avg_z += (point[0][2] + point[1][2]) / 2
+        
+        self.rectangles.append((points, avg_z))
 
 
     def projection(self):
+        self.rectangles = []
         polygons = self.matrix_trans.get_polygons()
         for j in range(0, len(polygons)):
             points = []
@@ -95,7 +149,43 @@ class MainWindow(QMainWindow):
                 if res != None:
                     points.append(res)
 
-            self.draw_rectangle(points)
+            self.add_rectangle(points)
+            #self.draw_rectangle(points)
+
+        self.rectangles.sort(key=self.sort_order)
+        self.draw_rectangles()
+
+    
+    def sort_order(self, rect):
+        """points = rect[0]
+        if points[0][0][0] < points[0][1][0]:
+            min_x = points[0][0][0]
+        else:
+            min_x = points[0][1][0]
+
+        if points[0][0][1] < points[0][1][1]:
+            min_y = points[0][0][1]
+        else:
+            min_y = points[0][1][1]
+
+        for i in range(1, len(points)):
+            if points[i][0][0] < min_x:
+                min_x = points[i][0][0]
+            if points[i][1][0] < min_x:
+                min_x = points[i][1][0]
+            
+            if points[i][0][1] < min_y:
+                min_y = points[i][0][1]
+            if points[i][1][1] < min_y:
+                min_y = points[i][1][1]"""
+
+        avg_x = 0
+        avg_y = 0
+        for points in rect[0]:
+            avg_x += (points[0][0] + points[1][0]) / 2
+            avg_y += (points[0][1] + points[1][1]) / 2
+
+        return -abs(rect[1]), -abs(avg_x), -abs(avg_y)
 
 
     def prepare_points(self, point1, point2):
